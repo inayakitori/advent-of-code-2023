@@ -17,25 +17,25 @@ fn main() {
         (txt.parse::<u32>().unwrap(), bounds)
     }).collect();
 
-    let symbols: Symbols = find_bounds_in(&input, Regex::new("[^(0-9).]").unwrap())
+    let symbols: Symbols = find_bounds_in(&input, Regex::new(r"\*").unwrap())
         .iter().copied().map(|(txt, bounds)| {
         (txt.chars().next().unwrap(), bounds)
     }).collect();
 
-    let part_numbers: Numbers = numbers.iter().cloned()
-        .filter(|(value, num_bounds)|{
-       symbols.iter().cloned().any(|(symbol, symbol_bounds)|{
-           let does_intersect = symbol_bounds.expand( 1).intersects(num_bounds);
-           if does_intersect {println!("{} at {} intersects {} at {}", value, num_bounds, symbol, symbol_bounds);}
-           does_intersect
-       })
-    }).collect();
+    let gear_ratio_sum: u32 = symbols.iter().flat_map(|(_,gear_bounds)| {
+        let adjacent_gears: Vec<Number> = numbers.iter().cloned()
+            .filter(|(_, number_bounds)|
+                gear_bounds.expand(1).intersects(number_bounds)
+            ).collect();
+        return if adjacent_gears.len() == 2 {
+            Some(adjacent_gears.iter().map(|(num, bounds)| num ).product::<u32>())
+        } else {
+            None
+        }
+    }).sum();
 
-    let sum = part_numbers.iter().fold(0, |acc,(number, bounds)| {
-        acc + number
-    });
 
-    println!("{sum}");
+    println!("{gear_ratio_sum}");
 }
 
 fn find_bounds_in(input: &str, num_regex: Regex) -> Vec<(&str, Bounds)> {
