@@ -8,24 +8,20 @@ use std::str::FromStr;
 fn main() {
     let input = fs::read_to_string("input").unwrap();
 
-    let max_hand = Handful::new(&[12, 13, 14]);
-
-    let (valid_games, invalid_games) : (Vec<Game>, Vec<Game>) = input.lines()
+    let games : Vec<Game> = input.lines()
         .flat_map(|line| {
             let game: Option<Game> = line.parse().ok();
-            if let Some(game) = &game {
-            } else {
+            if let None = &game {
                 println!("failed to parse \"{line}\"")
             }
             game
-        }).partition(|game| game.is_valid(&max_hand));
+        }).collect();
 
-    println!("{} valid games", valid_games.len());
-    println!("{} invalid games", valid_games.len());
+    println!("{} games", games.len());
 
-    let index_sum: u32 = valid_games.iter().fold(0, |acc, game| acc + &game.index);
+    let power: u32 = games.iter().map(Game::power).sum();
 
-    println!("sum of game #s: {index_sum}")
+    println!("sum of game #s: {power}")
 }
 
 
@@ -37,6 +33,10 @@ struct Game{
 impl Game{
     fn is_valid(&self, max_hand: &Handful) -> bool {
         self.handfuls.iter().all(|hand|hand.is_valid(max_hand))
+    }
+    fn power(&self) -> u32 {
+        let max_handful: Handful = self.handfuls.iter().cloned().sum();
+        max_handful.power()
     }
 }
 
@@ -69,7 +69,7 @@ impl FromStr for Game{
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct Handful{
     values: [u32;3],
     red: u32,
@@ -90,6 +90,10 @@ impl Handful{
         &self.red   <= &max_hand.red &&
         &self.green <= &max_hand.green &&
         &self.blue  <= &max_hand.blue
+    }
+
+    fn power(&self) -> u32 {
+        &self.red * &self.green * &self.blue
     }
 
 }
@@ -139,9 +143,9 @@ impl Add for Handful{
     type Output = Handful;
     fn add(self, rhs: Self) -> Self::Output {
         Handful::new(&[
-            self.red + rhs.red,
-            self.green + rhs.green,
-            self.blue + rhs.blue
+            self.red.max(rhs.red),
+            self.green.max(rhs.green),
+            self.blue.max(rhs.blue)
         ])
     }
 }
