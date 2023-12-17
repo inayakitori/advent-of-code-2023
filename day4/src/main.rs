@@ -3,7 +3,7 @@ mod splitting;
 use std::collections::HashSet;
 use std::fmt::{Debug, Display, Formatter};
 use std::fs;
-use std::ops::Deref;
+use std::ops::{Deref, Index};
 use std::str::FromStr;
 
 use thiserror::Error;
@@ -11,21 +11,26 @@ use crate::splitting::*;
 
 fn main() {
     let input = fs::read_to_string("input").unwrap();
-//     let input = r"Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
-// Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
-// Card 3:  1 21 53 59 44 | 69 82 63 72 16 21 14  1
-// Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
-// Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
-// Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
 
     let cards: Vec<Card> = input.lines().flat_map(|line|{
         line.parse::<Card>()
     }).collect();
 
-    let sum: u32 = cards.iter().map(Card::get_points).sum();
-    println!("total {sum} points");
+    let mut counts= vec![1u64 ; cards.len()];
+
+    for i in 0..counts.len() {
+        let count = counts[i];
+        let card_matches = cards[i].get_matches();
+        for j in i+1..=counts.len().min(i+card_matches as usize) {
+            counts[j] += count;
+        }
+    }
+
+    let sum: u64 = counts.iter().sum();
+    println!("total {sum} cards");
 
 }
+
 
 #[derive(Debug, Clone)]
 struct Card{
